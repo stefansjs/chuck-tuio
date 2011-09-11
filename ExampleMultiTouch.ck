@@ -8,16 +8,18 @@ class SinTouch extends Touch {
     //It is also expected to override the following 3:
     function void beginTouch()
     {
-        <<<"SinTouch: Begin Touch">>>;
+        if(debug > 1)
+            <<<"SinTouch: Begin Touch">>>;
         singen => dac;
         //float currentFreq;
         updateTouch();
     }
     function void updateTouch()
     {
-        positionToAmplitude(x,1) => singen.gain;
-        positionToFrequency(y) => singen.freq;
-        <<<"gain:",singen.gain(),"freq:",singen.freq()>>>;
+        positionToAmplitude(y,1) => singen.gain;
+        positionToFrequency(x) => singen.freq;
+        if(debug > 1)
+            <<<"gain:",singen.gain(),"freq:",singen.freq()>>>;
     }
     function void endTouch()
     {
@@ -38,7 +40,8 @@ class SinTouch extends Touch {
     }
     function Touch createTouch(int id, int FSeq)
     {
-        <<<"SinTouch, createTouch()",id,FSeq>>>;
+        if(debug > 1)
+            <<<"SinTouch, createTouch()",id,FSeq>>>;
         SinTouch newTouch;
         id => newTouch.id;
         FSeq => newTouch.FSeq;
@@ -74,7 +77,8 @@ TUIO listener;
 SinTouch list;
 listener.init(list);
 listener.startListening();
-5 => listener.debug;
+0 => int debug;
+debug => listener.debug;
 
 //SinOsc sinetone => dac;
 //100 => sinetone.freq;

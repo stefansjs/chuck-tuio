@@ -36,7 +36,7 @@ public class Touch
     0 => a;
     
     //Debug output level
-    10 => int debug;
+    0 => int debug;
     
     
     // --------------- member functions ---------------
