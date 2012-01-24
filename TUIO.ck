@@ -5,10 +5,11 @@ public class TUIO
     10 => int NumTouches;
     
     -1 => int FrameSeq;
-    
-    0 => int debug;
+    [false] @=> int updating[];
     
     Touch @ TouchList;
+    
+    0 => int debug;
     
     function void init(Touch CustomTouchObject)
     {
@@ -32,32 +33,47 @@ public class TUIO
         "/tuio/2Dcur,s" => string alivestring;
         for(0 => int i; i < NumTouches; i++){
             alivestring + ",i" => alivestring;
-            spork ~ aliveListener(listener.event(alivestring),i+1);
+            spork ~ aliveListener(listener.event(alivestring),i+1,updating);
         }
-        spork ~ setListener(listener.event("/tuio/2Dcur,s,i,f,f,f,f,f"));
+        spork ~ setListener(listener.event("/tuio/2Dcur,s,i,f,f,f,f,f"),updating);
     }
     
-    function void aliveListener(OscEvent event, int NumIDs)
+    function void aliveListener(OscEvent event, int NumIDs, int updating[])
     {
         if(debug > 1)
             <<<"TUIO.ck, aliveListener(): listener started",NumIDs>>>;
         string message;
+        int stopUpdating;
         while(true){
             event => now;
-            if(debug > 1)
+            false => stopUpdating;
+            
+            if(debug > 5)
                 <<<"TUIO.ck, aliveListener(): Alive event",NumIDs>>>;
+            
             while(event.nextMsg() != 0){
                 event.getString() => message;
+                
+                if(debug > 6)
+                    <<<"TUIO.ck, aliveListener()",message>>>;
+                
                 if(message == "fseq"){
-                    if(TouchList == NULL)
-                        <<<"TUIO.ck, aliveListener(): Null TouchList, fuck.",TouchList>>>;
-                    TouchList.cleanupTouches(FrameSeq) @=> TouchList;
-                    event.getInt() => FrameSeq;
-                    if(debug > 1)
-                        <<<"TUIO.ck, aliveListener(): fseq:",FrameSeq>>>;
+                    if(!stopUpdating){
+                        
+                        if(TouchList == NULL && debug > 2)
+                            <<<"TUIO.ck, aliveListener(): Null TouchList, fuck.",TouchList>>>;
+                        
+                        false => updating[0];
+                        TouchList.cleanupTouches(FrameSeq) @=> TouchList;
+                        event.getInt() => FrameSeq;
+                        true => stopUpdating;//prevents multiple fseqs from the same event.
+                        
+                        if(debug > 5)
+                            <<<"TUIO.ck, aliveListener(): fseq:",FrameSeq>>>;
+                    }
                 }
                 else if(message == "alive"){
-                    if(debug > 1)
+                    if(debug > 5)
                         <<<"TUIO.ck, aliveListener(): alive:",FrameSeq>>>;
                     for(0 => int count; count < NumIDs; count++){
                         if(debug > 5){
@@ -66,30 +82,37 @@ public class TUIO
                             else
                                 <<<"TUIO.ck, aliveListener(): non-null TouchList",TouchList,event>>>;
                         }
-                        TouchList.aliveTouch(event.getInt(),FrameSeq);
+                        TouchList.aliveTouch(event.getInt(),FrameSeq,NumIDs);
                     }
                 }
             }
         }
     }
     
-    function void setListener(OscEvent event)
+    function void setListener(OscEvent event, int updating[])
     {
         if(debug > 1)
-            <<<"TUIO.ck, setListener(): Listener started">>>;
+            <<<"TUIO.ck, setListener(): Listener started","2DCur">>>;
         string set;
         int ID;
         float x, y;
         float dxdt, dydt;
         float a;
         while(true){
+            if(debug > 4)
+                <<<"Tuio.ck, setListener(): Waiting for set event.">>>;
+            
             event => now;
-            if(debug > 1)
+            while(updating[0])
+                0.1::samp => now;//Wait for the next FSeq message.
+            
+            if(debug > 4)
                 <<<"TUIO.ck, setListener(): Set event">>>;
+            
             while(event.nextMsg() != 0){
                 event.getString() => set;
-                if(debug > 3)
-                    <<<"TUIO.ck, aliveListener():",set>>>;
+                if(debug > 6)
+                    <<<"TUIO.ck, setListener():",set>>>;
                 if(set == "set"){
                     event.getInt() => ID;
                     event.getFloat() => x;
@@ -97,11 +120,15 @@ public class TUIO
                     event.getFloat() => dxdt;
                     event.getFloat() => dydt;
                     event.getFloat() => a;
-                    if(debug > 2)
-                        <<<"TUIO.ck, setListener(): Touch Update (setlistener)">>>;
+                    if(debug > 5)
+                        <<<"TUIO.ck, setListener(): Touch Update">>>;
                     TouchList.update(ID,FrameSeq,x,y,dxdt,dydt,a) @=> TouchList;
                 }
+                else{
+                    <<<"Not a set message?",set>>>;
+                }
             }
+            true => updating[0];
         }
     }
 }

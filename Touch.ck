@@ -82,10 +82,10 @@ public class Touch
     //Public Interface---------------
     function Touch update(int id, int FSeq, float x, float y, float dxdt, float dydt, float a)
     {
-        if(debug > 5)
-            <<<"Touch.ck, update():", id, "updating;", this.id>>>;
+        if(debug > 4)
+            <<<"Touch.ck, update():", id, "updating;", this.id, FSeq>>>;
         if(id == this.id){
-            if(debug > 1)
+            if(debug > 4)
                 <<<"Touch.ck, update(): Updated",id>>>;
             
             //chuck the parameters
@@ -103,6 +103,8 @@ public class Touch
         }
         else if(id > this.id){
             if(nextTouch == null){
+                if(debug > 2)
+                    <<<"Touch.ck, updateTouch(): creating",id>>>;
                 createTouch(id,FSeq,x,y,dxdt,dydt,a) @=> nextTouch;
                 
                 return this;
@@ -114,21 +116,30 @@ public class Touch
         }
         else if(id < this.id){
             createTouch(id, FSeq, x, y, dxdt, dydt, a) @=> Touch NewTouch;
-            
             this @=> NewTouch.nextTouch;
+            
+            if(debug > 2)
+                <<<"Touch.ck, updatingTouch(): creating",id>>>;
+            
             return NewTouch;
         }
         else {
-            <<<"Touch.ck, update(): something went seriously">>>;
+            <<<"Touch.ck, update(): something went seriously wrong">>>;
             return null;
         }
     }
     
+    function void aliveTouch(int id, int FSeq, int NumTouches)
+    {
+        aliveTouch(id,FSeq);
+    }
     function void aliveTouch(int id, int FSeq)
     {
-        if(debug > 1)
+        if(debug > 4)
             <<<"Touch.ck aliveTouch()",this.id,id,FSeq>>>;
         if(id == this.id){
+            if(debug > 3)
+                <<<"Touch.ck, aliveTouch() updating:",id,this.FSeq,FSeq>>>;
             FSeq => this.FSeq;
             updateTouch();
         }
@@ -156,12 +167,14 @@ public class Touch
     
     function Touch cleanupTouches(int FSeq)
     {
-        if(debug > 1)
+        if(debug > 5)
             <<<"Touch.ck cleanupTouches()",id,FSeq>>>;
         if(nextTouch != null)
             nextTouch.cleanupTouches(FSeq) @=> nextTouch;
         if(FSeq > this.FSeq && this.id != -1){
             spork ~ endTouch();
+            if(debug > 2)
+                <<<"Touch.ck cleanupTouches(): removing",id>>>;
             //ChucK is garbage collected so this isn't a big deal, right?
             return nextTouch;
         }

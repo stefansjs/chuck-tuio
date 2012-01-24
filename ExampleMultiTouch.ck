@@ -24,7 +24,7 @@ class SinTouch extends Touch {
     }
     function void updateTouch()
     {
-        positionToAmplitude(y,1) => singen.gain;
+        positionToAmplitude(y) => singen.gain;
         positionToFrequency(x) => singen.freq;
         if(debug > 1)
             <<<"gain:",singen.gain(),"freq:",singen.freq()>>>;
@@ -34,43 +34,24 @@ class SinTouch extends Touch {
         singen =< dac;
     }
     
-    
-    function float positionToAmplitude(float pos, int numTouches)
+    function float positionToAmplitude(float pos)
     {
         0.9 => float peak;
-        return peak * pos / numTouches;
+        return peak * (1-pos);
     }
     function float positionToFrequency(float pos)
     {
-        200.0 => float min;
-        1000.0 => float max;
-        return pos * (max - min) + min;
+        "note" => string mapping;
+        false => int quantized;
+        50.0 => float fmin;//Hz
+        750.0 => float fmax;//Hz
+        
+        //linear map from fmin to fmax
+        pos * (fmax-fmin) + fmin => pos;
+        
+        return pos;
     }
-    /*
-    function Touch createTouch(int id, int FSeq, float x, float y, float dxdt, float dydt, float a)
-    {
-        createTouch(id) @=> SinTouch newTouch;
-        
-        FSeq => newTouch.FSeq;
-        x => newTouch.x;
-        y => newTouch.y;
-        dxdt => newTouch.dxdt;
-        dydt => newTouch.dydt;
-        a => newTouch.a;
-        
-        spork ~ newTouch.beginTouch();
-        //spork ~ newTouch.updateTouch();
-        
-        return newTouch;
-    }
-    */
 }
-
-/*
-Machine.add("Touch.ck");
-Machine.add("TUIO.ck");
-*/
-
 
 TUIO listener;
 SinTouch list;
@@ -79,13 +60,7 @@ listener.startListening();
 0 => int debug;
 debug => listener.debug;
 
-//SinOsc sinetone => dac;
-//100 => sinetone.freq;
-//0.5 => sinetone.gain;
 while(true){
-    <<<"ping",now>>>;
-    9::second => now;
-    //400 => sinetone.freq;
-    1:: second => now;
-    //100 => sinetone.freq;
+    //<<<"ping",now>>>;
+    10:: second => now;
 }
