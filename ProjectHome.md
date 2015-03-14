@@ -1,0 +1,1 @@
+This is a [ChucK](http://chuck.cs.princeton.edu) class designed to help make multi-touch applications easily by listening for and processing [TUIO](http://tuio.org) events.
